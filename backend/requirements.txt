@@ -6,3 +6,4 @@ bcrypt
 motor
 python-dotenv
 requests
+email-validator
