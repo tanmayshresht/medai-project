@@ -26,9 +26,12 @@ app = FastAPI(title="MedAI Multi-Modal Disease Detection API", version="1.0.0")
 # CORS middleware configuration
 # NOTE: allow_origins=["*"] combined with allow_credentials=True is invalid per the
 # CORS spec (browsers reject it). List the actual frontend origin(s) explicitly instead.
+# The Vercel production origin is included by default here; override/extend it via the
+# FRONTEND_ORIGINS env var on Render if you add more deployment URLs later
+# (comma-separated, e.g. "https://a.vercel.app,https://b.com").
 FRONTEND_ORIGINS = os.getenv(
     "FRONTEND_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000"
+    "https://medai-project-seven.vercel.app,http://localhost:3000,http://127.0.0.1:3000"
 ).split(",")
 
 app.add_middleware(
@@ -80,7 +83,7 @@ async def get_current_user(request: Request):
 
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
-        user_id: str = payload.get("sub")
+        user_id: Optional[str] = payload.get("sub")
         if not user_id:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authentication credentials")
 
@@ -568,8 +571,6 @@ async def chat_assistant(payload: ChatRequest):
     except Exception as e:
         print("Exception caught in chat:", str(e))
 
-    # If the API call failed for any reason, use the rule-based fallback
-    # instead of a hardcoded message.
     return {"reply": generate_fallback_reply(payload.message)}
 
 if __name__ == "__main__":
